@@ -1,0 +1,168 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h3 mb-1">{{ esEdicion() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+    <p class="text-body-secondary mb-0">
+      Los productos no se eliminan: solo se activan o desactivan lógicamente.
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" routerLink="/productos">
+    <i class="bi bi-arrow-left me-1"></i>Volver al listado
+  </a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger alert-dismissible" role="alert">
+    {{ error() }}
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="error.set('')"></button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    @if (cargando()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary me-2"></div>
+        Cargando producto…
+      </div>
+    } @else {
+      <form novalidate (submit)="guardar($event)">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="codigo">Código <span class="text-danger">*</span></label>
+            <input
+              id="codigo"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="form.codigo().touched() && form.codigo().invalid()"
+              [formField]="form.codigo"
+            />
+            @if (form.codigo().touched() && form.codigo().invalid()) {
+              <div class="invalid-feedback d-block">{{ form.codigo().errors()[0]?.message }}</div>
+            }
+          </div>
+
+          <div class="col-12 col-md-8">
+            <label class="form-label" for="nombre">Nombre <span class="text-danger">*</span></label>
+            <input
+              id="nombre"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="form.nombre().touched() && form.nombre().invalid()"
+              [formField]="form.nombre"
+            />
+            @if (form.nombre().touched() && form.nombre().invalid()) {
+              <div class="invalid-feedback d-block">{{ form.nombre().errors()[0]?.message }}</div>
+            }
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="descripcion">Descripción</label>
+            <textarea
+              id="descripcion"
+              rows="2"
+              class="form-control"
+              [class.is-invalid]="form.descripcion().touched() && form.descripcion().invalid()"
+              [formField]="form.descripcion"
+            ></textarea>
+            @if (form.descripcion().touched() && form.descripcion().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.descripcion().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="idCategoria">
+              Categoría <span class="text-danger">*</span>
+            </label>
+            <select
+              id="idCategoria"
+              class="form-select"
+              [class.is-invalid]="form.idCategoria().touched() && form.idCategoria().invalid()"
+              [formField]="form.idCategoria"
+            >
+              <option value="">Selecciona una categoría</option>
+              @for (categoria of categorias(); track categoria.idCategoria) {
+                <option [value]="categoria.idCategoria">{{ categoria.nombre }}</option>
+              }
+            </select>
+            @if (form.idCategoria().touched() && form.idCategoria().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.idCategoria().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="unidadMedida">
+              Unidad de medida <span class="text-danger">*</span>
+            </label>
+            <input
+              id="unidadMedida"
+              type="text"
+              class="form-control"
+              placeholder="Ej. caja, unidad, frasco"
+              [class.is-invalid]="form.unidadMedida().touched() && form.unidadMedida().invalid()"
+              [formField]="form.unidadMedida"
+            />
+            @if (form.unidadMedida().touched() && form.unidadMedida().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.unidadMedida().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="precioUnitario">
+              Precio unitario (S/) <span class="text-danger">*</span>
+            </label>
+            <input
+              id="precioUnitario"
+              type="number"
+              step="0.01"
+              class="form-control"
+              [class.is-invalid]="
+                form.precioUnitario().touched() && form.precioUnitario().invalid()
+              "
+              [formField]="form.precioUnitario"
+            />
+            @if (form.precioUnitario().touched() && form.precioUnitario().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.precioUnitario().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="stockMinimo">
+              Stock mínimo <span class="text-danger">*</span>
+            </label>
+            <input
+              id="stockMinimo"
+              type="number"
+              step="1"
+              class="form-control"
+              [class.is-invalid]="form.stockMinimo().touched() && form.stockMinimo().invalid()"
+              [formField]="form.stockMinimo"
+            />
+            @if (form.stockMinimo().touched() && form.stockMinimo().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.stockMinimo().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a class="btn btn-outline-secondary" routerLink="/productos">Cancelar</a>
+          <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            {{ esEdicion() ? 'Guardar cambios' : 'Registrar producto' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

@@ -1,0 +1,129 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h3 mb-1">Historial de entradas</h2>
+    <p class="text-body-secondary mb-0">
+      Movimientos de tipo ENTRADA ordenados del más reciente al más antiguo.
+    </p>
+  </div>
+  <a class="btn btn-primary" routerLink="/entradas/nueva">
+    <i class="bi bi-plus-lg me-1"></i>Registrar entrada
+  </a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger alert-dismissible" role="alert">
+    {{ error() }}
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="error.set('')"></button>
+  </div>
+}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="producto">Producto</label>
+        <select
+          id="producto"
+          class="form-select"
+          [value]="idProducto() ?? ''"
+          (change)="onProductoChange($event)"
+        >
+          <option value="">Todos</option>
+          @for (producto of productos(); track producto.idProducto) {
+            <option [value]="producto.idProducto">
+              {{ producto.codigo }} · {{ producto.nombre }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label" for="desde">Desde</label>
+        <input
+          id="desde"
+          type="datetime-local"
+          class="form-control"
+          [value]="desde()"
+          (change)="onDesdeChange($event)"
+        />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label" for="hasta">Hasta</label>
+        <input
+          id="hasta"
+          type="datetime-local"
+          class="form-control"
+          [value]="hasta()"
+          (change)="onHastaChange($event)"
+        />
+      </div>
+
+      <div class="col-12 col-md-2 d-flex gap-2">
+        <button type="button" class="btn btn-primary flex-grow-1" (click)="cargar()">
+          <i class="bi bi-search me-1"></i>Filtrar
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">
+          Limpiar
+        </button>
+      </div>
+    </div>
+    <div class="form-text mt-2">
+      Las fechas se interpretan en hora de América/Lima (UTC-5) y se muestran en esa misma zona
+      horaria.
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Fecha (Lima)</th>
+          <th>Producto</th>
+          <th>Lote</th>
+          <th class="text-end">Cantidad</th>
+          <th>Motivo</th>
+          <th class="text-end">Stock anterior</th>
+          <th class="text-end">Stock posterior</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (cargando()) {
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+              Cargando historial…
+            </td>
+          </tr>
+        } @else {
+          @for (entrada of entradas(); track entrada.idMovimiento) {
+            <tr>
+              <td class="text-body-secondary">{{ entrada.idMovimiento }}</td>
+              <td class="text-nowrap">{{ fechaLima(entrada.fechaMovimiento) }}</td>
+              <td>
+                <div class="fw-semibold">{{ entrada.nombreProducto }}</div>
+                <div class="small text-body-secondary">Producto #{{ entrada.idProducto }}</div>
+              </td>
+              <td>{{ entrada.numeroLote }}</td>
+              <td class="text-end">
+                <span class="badge text-bg-success">+{{ entrada.cantidad }}</span>
+              </td>
+              <td>{{ entrada.motivo }}</td>
+              <td class="text-end">{{ entrada.stockAnterior }}</td>
+              <td class="text-end fw-semibold">{{ entrada.stockPosterior }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="text-center text-body-secondary py-4">
+                No hay entradas registradas con los filtros seleccionados.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
