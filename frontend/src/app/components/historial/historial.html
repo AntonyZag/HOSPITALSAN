@@ -1,0 +1,73 @@
+<!-- Acceso al registro y filtros del historial. -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h2 class="h3 mb-0">Historial de movimientos</h2>
+  <a routerLink="/salidas" class="btn btn-primary">Registrar salida</a>
+</div>
+
+@if (errorCatalogos()) {
+  <div class="alert alert-warning" role="alert">
+    No se pudieron cargar los selectores. {{ errorCatalogos() }}
+    <button type="button" class="btn btn-sm btn-outline-dark ms-2" (click)="cargarCatalogos()">
+      Reintentar
+    </button>
+  </div>
+}
+<form class="card card-body shadow-sm mb-4" novalidate (submit)="buscar($event)">
+  <fieldset class="row g-3 align-items-start" [disabled]="cargando()">
+    <div class="col-12 col-md-4">
+      <label for="historial-producto" class="form-label">Producto</label>
+      <select id="historial-producto" class="form-select" [formField]="formulario.idProducto">
+        <option value="">{{ cargandoCatalogos() ? 'Cargando…' : 'Todos los productos' }}</option>
+        @for (producto of productos(); track producto.id_producto) {
+          <option [value]="producto.id_producto">
+            {{ producto.codigo }} · {{ producto.nombre }}
+          </option>
+        }
+      </select>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <label for="historial-tipo" class="form-label">Tipo de movimiento</label>
+      <select id="historial-tipo" class="form-select" [formField]="formulario.tipo">
+        <option value="">Todos los tipos</option>
+        <option value="ENTRADA">Entrada</option>
+        <option value="SALIDA">Salida</option>
+      </select>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <label for="historial-area" class="form-label">Área hospitalaria</label>
+      <select id="historial-area" class="form-select" [formField]="formulario.idArea">
+        <option value="">{{ cargandoCatalogos() ? 'Cargando…' : 'Todas las áreas' }}</option>
+        @for (area of areas(); track area.id_area) {
+          <option [value]="area.id_area">{{ area.nombre_area }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <label for="historial-desde" class="form-label">Desde (Lima)</label>
+      <input id="historial-desde" class="form-control" type="date" [formField]="formulario.desde" />
+      @if (formulario.desde().touched() && formulario.desde().invalid()) {
+        <div class="invalid-feedback d-block">{{ formulario.desde().errors()[0]?.message }}</div>
+      }
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <label for="historial-hasta" class="form-label">Hasta (Lima)</label>
+      <input id="historial-hasta" class="form-control" type="date" [formField]="formulario.hasta" />
+      @if (formulario.hasta().touched() && formulario.hasta().invalid()) {
+        <div class="invalid-feedback d-block">{{ formulario.hasta().errors()[0]?.message }}</div>
+      }
+    </div>
+    <div class="col-12 col-md-4 d-flex flex-wrap gap-2 align-self-md-end">
+      <button type="submit" class="btn btn-primary">Buscar</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="limpiar()">Limpiar</button>
+    </div>
+  </fieldset>
+</form>
+
+<!-- La tabla incluye el lote y el área cuando el movimiento los tiene. -->
+@if (cargando()) {
+  <p class="text-body-secondary" role="status">Cargando movimientos…</p>
+} @else if (error()) {
+  <div class="alert alert-danger" role="alert">{{ error() }}</div>
+} @else {
+  <app-tabla-movimientos [movimientos]="movimientos()" />
+}

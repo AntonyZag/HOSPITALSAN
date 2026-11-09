@@ -8,7 +8,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   template: `
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
       <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/productos">
+        <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/indicadores">
           <i class="bi bi-hospital fs-3"></i>
           <h1 class="h4 mb-0">Hospital San Gabriel</h1>
         </a>
@@ -43,6 +43,22 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
             <li class="nav-item">
               <a class="nav-link" routerLink="/entradas" routerLinkActive="active">
                 <i class="bi bi-box-arrow-in-down me-1"></i>Entradas
+              </a>
+            </li>
+            <!-- Enlaces para consultar inventario y registrar retiros. -->
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/salidas" routerLinkActive="active">
+                <i class="bi bi-box-arrow-up me-1"></i>Salidas
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/historial" routerLinkActive="active">
+                <i class="bi bi-clock-history me-1"></i>Historial
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/indicadores" routerLinkActive="active">
+                <i class="bi bi-bar-chart me-1"></i>Indicadores
               </a>
             </li>
             <li class="nav-item">
