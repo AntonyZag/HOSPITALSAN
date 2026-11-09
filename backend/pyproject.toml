@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.15"
 dependencies = [
     "fastapi>=0.162.2",
-    "pyodbc>=5.5.0",
+    # Esta versión carga con el Control inteligente de aplicaciones activo.
+    "pyodbc==5.4.0",
     "python-dotenv>=1.2.4",
     "uvicorn>=0.54.0",
 ]

@@ -1,0 +1,140 @@
+<!-- Encabezado y comprobante de la última salida. -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h2 class="h3 mb-0">Registrar salida</h2>
+  <a routerLink="/historial" class="btn btn-outline-secondary">Ver historial</a>
+</div>
+
+@if (comprobante(); as salida) {
+  <div class="alert alert-success" role="status">
+    <strong>Salida #{{ salida.id_movimiento }} registrada.</strong>
+    Se retiraron {{ salida.cantidad }} unidades de {{ salida.nombre_producto }}, lote
+    {{ salida.numero_lote }}, para {{ salida.nombre_area }}. Stock del producto:
+    {{ salida.stock_anterior }} → {{ salida.stock_posterior }}.
+  </div>
+}
+@if (errorSalida()) {
+  <div class="alert alert-danger" role="alert">{{ errorSalida() }}</div>
+}
+
+<!-- Los selectores se llenan con los datos vigentes de la API. -->
+@if (cargandoCatalogos()) {
+  <p class="text-body-secondary" role="status">Cargando productos y áreas…</p>
+} @else if (errorCatalogos()) {
+  <div class="alert alert-danger" role="alert">
+    {{ errorCatalogos() }}
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="cargarCatalogos()">
+      Reintentar
+    </button>
+  </div>
+} @else {
+  <form class="card card-body shadow-sm" novalidate (submit)="guardar($event)">
+    <fieldset class="row g-3" [disabled]="guardando()">
+      <div class="col-12 col-md-6">
+        <label for="salida-producto" class="form-label">Producto activo</label>
+        <select
+          id="salida-producto"
+          class="form-select"
+          [formField]="formulario.idProducto"
+          (change)="cambiarProducto($event)"
+        >
+          <option value="">Selecciona un producto</option>
+          @for (producto of productos(); track producto.id_producto) {
+            <option [value]="producto.id_producto">
+              {{ producto.codigo }} · {{ producto.nombre }}
+            </option>
+          }
+        </select>
+        @if (formulario.idProducto().touched() && formulario.idProducto().invalid()) {
+          <div class="invalid-feedback d-block">
+            {{ formulario.idProducto().errors()[0]?.message }}
+          </div>
+        }
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label for="salida-lote" class="form-label">Lote vigente</label>
+        <select id="salida-lote" class="form-select" [formField]="formulario.idLote">
+          <option value="">Selecciona un lote</option>
+          @for (lote of lotes(); track lote.id_lote) {
+            <option [value]="lote.id_lote">
+              {{ lote.numero_lote }} · {{ lote.cantidad_disponible }} disponibles · vence
+              {{ lote.fecha_vencimiento + 'T00:00:00Z' | date: 'dd/MM/yyyy' : 'UTC' }}
+            </option>
+          }
+        </select>
+        @if (cargandoLotes()) {
+          <div class="form-text" role="status">Cargando lotes…</div>
+        } @else if (errorLotes()) {
+          <div class="text-danger small mt-1" role="alert">
+            {{ errorLotes() }}
+            <button type="button" class="btn btn-sm btn-link" (click)="cargarLotes()">
+              Reintentar
+            </button>
+          </div>
+        } @else if (modelo().idProducto && lotes().length === 0) {
+          <div class="form-text">Este producto no tiene lotes vigentes con stock.</div>
+        } @else if (formulario.idLote().touched() && formulario.idLote().invalid()) {
+          <div class="invalid-feedback d-block">{{ formulario.idLote().errors()[0]?.message }}</div>
+        }
+      </div>
+
+      <!-- El usuario indica cuántas unidades retira, cuándo y para qué área. -->
+      <div class="col-12 col-md-4">
+        <label for="salida-cantidad" class="form-label">Cantidad</label>
+        <input
+          id="salida-cantidad"
+          class="form-control"
+          type="number"
+          step="1"
+          [formField]="formulario.cantidad"
+        />
+        @if (formulario.cantidad().touched() && formulario.cantidad().invalid()) {
+          <div class="invalid-feedback d-block">
+            {{ formulario.cantidad().errors()[0]?.message }}
+          </div>
+        }
+      </div>
+      <div class="col-12 col-md-4">
+        <label for="salida-fecha" class="form-label">Fecha de salida</label>
+        <input id="salida-fecha" class="form-control" type="date" [formField]="formulario.fecha" />
+        @if (formulario.fecha().touched() && formulario.fecha().invalid()) {
+          <div class="invalid-feedback d-block">{{ formulario.fecha().errors()[0]?.message }}</div>
+        }
+      </div>
+      <div class="col-12 col-md-4">
+        <label for="salida-area" class="form-label">Área de destino</label>
+        <select id="salida-area" class="form-select" [formField]="formulario.idArea">
+          <option value="">Selecciona un área</option>
+          @for (area of areas(); track area.id_area) {
+            <option [value]="area.id_area">{{ area.nombre_area }}</option>
+          }
+        </select>
+        @if (formulario.idArea().touched() && formulario.idArea().invalid()) {
+          <div class="invalid-feedback d-block">{{ formulario.idArea().errors()[0]?.message }}</div>
+        }
+      </div>
+      <div class="col-12">
+        <label for="salida-motivo" class="form-label">Motivo</label>
+        <input
+          id="salida-motivo"
+          class="form-control"
+          type="text"
+          [formField]="formulario.motivo"
+        />
+        @if (formulario.motivo().touched() && formulario.motivo().invalid()) {
+          <div class="invalid-feedback d-block">{{ formulario.motivo().errors()[0]?.message }}</div>
+        }
+      </div>
+    </fieldset>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="guardando() || cargandoLotes() || !!errorLotes()"
+      >
+        {{ guardando() ? 'Registrando…' : 'Registrar salida' }}
+      </button>
+    </div>
+  </form>
+}

@@ -1,0 +1,49 @@
+<!-- Muestra el detalle del movimiento y los saldos antes y después del registro. -->
+<div class="table-responsive">
+  <table class="table table-striped align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col">Fecha (Lima)</th>
+        <th scope="col">Producto</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Lote</th>
+        <th scope="col">Área</th>
+        <th scope="col">Motivo</th>
+        <th scope="col" class="text-end">Cantidad</th>
+        <th scope="col" class="text-end">Stock anterior</th>
+        <th scope="col" class="text-end">Stock posterior</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (movimiento of movimientos(); track movimiento.id_movimiento) {
+        <tr>
+          <td class="text-nowrap">
+            {{ (movimiento.fecha_movimiento | date: 'dd/MM/yyyy HH:mm' : '-0500') ?? '—' }}
+          </td>
+          <td>{{ movimiento.nombre_producto }}</td>
+          <td>
+            <span
+              class="badge"
+              [class.text-bg-success]="movimiento.tipo_movimiento === 'ENTRADA'"
+              [class.text-bg-primary]="movimiento.tipo_movimiento === 'SALIDA'"
+            >
+              {{ movimiento.tipo_movimiento }}
+            </span>
+          </td>
+          <td>{{ movimiento.numero_lote ?? '—' }}</td>
+          <td>{{ movimiento.nombre_area ?? '—' }}</td>
+          <td>{{ movimiento.motivo }}</td>
+          <td class="text-end">{{ movimiento.cantidad }}</td>
+          <td class="text-end">{{ movimiento.stock_anterior }}</td>
+          <td class="text-end">{{ movimiento.stock_posterior }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="9" class="text-center text-body-secondary">
+            No hay movimientos para la consulta.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

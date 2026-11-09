@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'productos' },
+  { path: '', pathMatch: 'full', redirectTo: 'indicadores' },
   {
     path: 'productos',
     loadComponent: () => import('./components/productos/producto-lista').then((m) => m.ProductoLista),
@@ -42,6 +42,19 @@ export const routes: Routes = [
   {
     path: 'entradas/nueva',
     loadComponent: () => import('./components/entradas/entrada-form').then((m) => m.EntradaForm),
+  },
+  // Abre las pantallas de salidas, historial e indicadores desde el menú.
+  {
+    path: 'salidas',
+    loadComponent: () => import('./components/salidas/salida-form').then((m) => m.SalidaForm),
+  },
+  {
+    path: 'historial',
+    loadComponent: () => import('./components/historial/historial').then((m) => m.Historial),
+  },
+  {
+    path: 'indicadores',
+    loadComponent: () => import('./components/indicadores/indicadores').then((m) => m.Indicadores),
   },
   {
     path: 'diagnostico',
