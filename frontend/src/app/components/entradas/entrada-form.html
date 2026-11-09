@@ -1,0 +1,194 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h3 mb-1">Registrar entrada</h2>
+    <p class="text-body-secondary mb-0">
+      Registra el ingreso de un lote y actualiza el stock del producto.
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" routerLink="/entradas">
+    <i class="bi bi-clock-history me-1"></i>Ver historial
+  </a>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger alert-dismissible" role="alert">
+    {{ error() }}
+    <button type="button" class="btn-close" aria-label="Cerrar" (click)="error.set('')"></button>
+  </div>
+}
+
+@if (exito()) {
+  <div class="alert alert-success" role="status">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <div>
+        <div class="fw-semibold"><i class="bi bi-check-circle me-1"></i>Entrada registrada</div>
+        <div>{{ exito() }}</div>
+        @if (ultimaEntrada(); as entrada) {
+          <div class="small mt-1">
+            Lote <strong>{{ entrada.numeroLote }}</strong> · Movimiento #{{ entrada.idMovimiento }}
+          </div>
+        }
+      </div>
+      <button type="button" class="btn-close" aria-label="Cerrar" (click)="exito.set('')"></button>
+    </div>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    @if (cargando()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary me-2"></div>
+        Cargando productos…
+      </div>
+    } @else {
+      <form novalidate (submit)="guardar($event)">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="idProducto">
+              Producto <span class="text-danger">*</span>
+            </label>
+            <select
+              id="idProducto"
+              class="form-select"
+              [class.is-invalid]="form.idProducto().touched() && form.idProducto().invalid()"
+              [formField]="form.idProducto"
+              (change)="onProductoChange($event)"
+            >
+              <option value="">Selecciona un producto activo</option>
+              @for (producto of productos(); track producto.idProducto) {
+                <option [value]="producto.idProducto">
+                  {{ producto.codigo }} · {{ producto.nombre }}
+                </option>
+              }
+            </select>
+            @if (form.idProducto().touched() && form.idProducto().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.idProducto().errors()[0]?.message }}
+              </div>
+            }
+            <div class="form-text">
+              Solo se muestran productos activos. Un producto inactivo no puede recibir entradas.
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="numeroLote">
+              Número de lote <span class="text-danger">*</span>
+            </label>
+            <input
+              id="numeroLote"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="form.numeroLote().touched() && form.numeroLote().invalid()"
+              [formField]="form.numeroLote"
+            />
+            @if (form.numeroLote().touched() && form.numeroLote().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.numeroLote().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="fechaVencimiento">
+              Vencimiento <span class="text-danger">*</span>
+            </label>
+            <input
+              id="fechaVencimiento"
+              type="date"
+              class="form-control"
+              [class.is-invalid]="
+                form.fechaVencimiento().touched() && form.fechaVencimiento().invalid()
+              "
+              [formField]="form.fechaVencimiento"
+            />
+            @if (form.fechaVencimiento().touched() && form.fechaVencimiento().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.fechaVencimiento().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="cantidad">
+              Cantidad <span class="text-danger">*</span>
+            </label>
+            <input
+              id="cantidad"
+              type="number"
+              step="1"
+              class="form-control"
+              [class.is-invalid]="form.cantidad().touched() && form.cantidad().invalid()"
+              [formField]="form.cantidad"
+            />
+            @if (form.cantidad().touched() && form.cantidad().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.cantidad().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+
+          <div class="col-12 col-md-9">
+            <label class="form-label" for="motivo">Motivo <span class="text-danger">*</span></label>
+            <input
+              id="motivo"
+              type="text"
+              class="form-control"
+              placeholder="Ej. Compra a proveedor, donación, reposición"
+              [class.is-invalid]="form.motivo().touched() && form.motivo().invalid()"
+              [formField]="form.motivo"
+            />
+            @if (form.motivo().touched() && form.motivo().invalid()) {
+              <div class="invalid-feedback d-block">
+                {{ form.motivo().errors()[0]?.message }}
+              </div>
+            }
+            <div class="form-text">Máximo 50 caracteres.</div>
+          </div>
+        </div>
+
+        @if (lotes().length > 0) {
+          <div class="alert alert-info mt-4 mb-0">
+            <div class="fw-semibold mb-2">
+              <i class="bi bi-info-circle me-1"></i>Lotes ya registrados para este producto
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Lote</th>
+                    <th>Vencimiento</th>
+                    <th class="text-end">Disponible</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (lote of lotes(); track lote.idLote) {
+                    <tr>
+                      <td>{{ lote.numeroLote }}</td>
+                      <td>{{ fechaVencimientoLote(lote) | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+                      <td class="text-end">{{ lote.cantidadDisponible }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="small mt-2">
+              Si el lote ya existe, la fecha de vencimiento debe coincidir con la registrada.
+            </div>
+          </div>
+        }
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a class="btn btn-outline-secondary" routerLink="/entradas">Cancelar</a>
+          <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Registrar entrada
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ConnectionTest } from './components/connection-test';
+import { Shell } from './layout/shell';
 
 @Component({
-  imports: [ConnectionTest, RouterOutlet],
+  imports: [Shell],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

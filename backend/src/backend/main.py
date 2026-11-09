@@ -1,13 +1,29 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from backend.apis.connectivity import router
+from backend.apis.categorias import router as categorias_router
+from backend.apis.connectivity import router as connectivity_router
+from backend.apis.entradas import router as entradas_router
+from backend.apis.productos import router as productos_router
 from backend.config import CORS_ORIGINS
+from backend.errors import AppError
 
 app = FastAPI(title="Hospital San Gabriel")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "PUT", "PATCH"],
+    allow_headers=["*"],
 )
-app.include_router(router)
+
+
+@app.exception_handler(AppError)
+async def app_error_handler(_request: Request, error: AppError) -> JSONResponse:
+    return JSONResponse(status_code=error.status_code, content={"detail": error.detail})
+
+
+app.include_router(connectivity_router)
+app.include_router(categorias_router)
+app.include_router(productos_router)
+app.include_router(entradas_router)
