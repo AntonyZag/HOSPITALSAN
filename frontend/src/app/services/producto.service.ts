@@ -1,10 +1,63 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Lote } from '../interfaces/lote';
+import { LoteVigente } from '../interfaces/inventario';
 import { Producto, ProductoFiltro, ProductoPayload } from '../interfaces/producto';
 import { ProximoVencer } from '../interfaces/proximo-vencer';
+
+type ProductoApi = Omit<
+  Producto,
+  | 'idProducto'
+  | 'idCategoria'
+  | 'nombreCategoria'
+  | 'unidadMedida'
+  | 'precioUnitario'
+  | 'stockMinimo'
+  | 'stockActual'
+  | 'proximoVencimiento'
+> & {
+  id_producto: number;
+  id_categoria: number;
+  nombre_categoria: string;
+  unidad_medida: string;
+  precio_unitario: string;
+  stock_minimo: number;
+  stock_actual: number;
+  proximo_vencimiento: string | null;
+};
+
+// Adapta los nombres de la API a los que usan los formularios y las listas.
+function leerProducto(producto: ProductoApi): Producto {
+  return {
+    idProducto: producto.id_producto,
+    codigo: producto.codigo,
+    nombre: producto.nombre,
+    descripcion: producto.descripcion,
+    idCategoria: producto.id_categoria,
+    nombreCategoria: producto.nombre_categoria,
+    unidadMedida: producto.unidad_medida,
+    precioUnitario: producto.precio_unitario,
+    stockMinimo: producto.stock_minimo,
+    activo: producto.activo,
+    stockActual: producto.stock_actual,
+    proximoVencimiento: producto.proximo_vencimiento,
+  };
+}
+
+// Usa los nombres que FastAPI valida al guardar.
+function enviarProducto(payload: ProductoPayload) {
+  return {
+    codigo: payload.codigo,
+    nombre: payload.nombre,
+    descripcion: payload.descripcion,
+    id_categoria: payload.idCategoria,
+    unidad_medida: payload.unidadMedida,
+    precio_unitario: payload.precioUnitario,
+    stock_minimo: payload.stockMinimo,
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProductoService {
@@ -30,25 +83,31 @@ export class ProductoService {
       params = params.set('dias_vencimiento', filtros.diasVencimiento);
     }
 
-    return this.http.get<Producto[]>(this.baseUrl, { params });
+    return this.http
+      .get<ProductoApi[]>(this.baseUrl, { params })
+      .pipe(map((productos) => productos.map(leerProducto)));
   }
 
   obtener(idProducto: number): Observable<Producto> {
-    return this.http.get<Producto>(`${this.baseUrl}/${idProducto}`);
+    return this.http.get<ProductoApi>(`${this.baseUrl}/${idProducto}`).pipe(map(leerProducto));
   }
 
   crear(payload: ProductoPayload): Observable<Producto> {
-    return this.http.post<Producto>(this.baseUrl, payload);
+    return this.http
+      .post<ProductoApi>(this.baseUrl, enviarProducto(payload))
+      .pipe(map(leerProducto));
   }
 
   actualizar(idProducto: number, payload: ProductoPayload): Observable<Producto> {
-    return this.http.put<Producto>(`${this.baseUrl}/${idProducto}`, payload);
+    return this.http
+      .put<ProductoApi>(`${this.baseUrl}/${idProducto}`, enviarProducto(payload))
+      .pipe(map(leerProducto));
   }
 
   cambiarEstado(idProducto: number, activo: boolean): Observable<Producto> {
-    return this.http.patch<Producto>(`${this.baseUrl}/${idProducto}/estado`, {
-      activo,
-    });
+    return this.http
+      .patch<ProductoApi>(`${this.baseUrl}/${idProducto}/estado`, { activo })
+      .pipe(map(leerProducto));
   }
 
   proximosVencer(dias = 30): Observable<ProximoVencer[]> {
@@ -59,6 +118,17 @@ export class ProductoService {
   }
 
   listarLotes(idProducto: number): Observable<Lote[]> {
-    return this.http.get<Lote[]>(`${this.baseUrl}/${idProducto}/lotes`);
+    // Adapta los lotes que se muestran al registrar una entrada.
+    return this.http.get<LoteVigente[]>(`${this.baseUrl}/${idProducto}/lotes`).pipe(
+      map((lotes) =>
+        lotes.map((lote) => ({
+          idLote: lote.id_lote,
+          idProducto: lote.id_producto,
+          numeroLote: lote.numero_lote,
+          fechaVencimiento: lote.fecha_vencimiento,
+          cantidadDisponible: lote.cantidad_disponible,
+        })),
+      ),
+    );
   }
 }
