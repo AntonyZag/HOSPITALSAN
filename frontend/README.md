@@ -1,59 +1,35 @@
-# Frontend
+# Frontend — Hospital San Gabriel
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Angular 22 standalone, Signal Forms, Bootstrap 5, Bootstrap Icons y SweetAlert2.
+Node compatible: `^22.22.3 || ^24.15.0 || >=26.0.0`.
 
-## Development server
+Desde **frontend/**:
 
-To start a local development server, run:
-
-```bash
-ng serve
+```powershell
+npm ci
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abrir `http://localhost:4200`. FastAPI debe funcionar en el puerto 8000 y conectar
+a SQL Server. La dirección está en `src/environments/environment.ts`.
 
-## Code scaffolding
+El panel tiene Indicadores, Productos, Categorías, Entradas, Salidas, Historial
+y Vencimientos. Categorías, áreas, lotes e indicadores se consultan en la API.
+Después de preparar la demo, recargar el listado o actualizar el panel.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+El login guarda una sesión local de demostración; **no autentica solicitudes del
+backend**. Cerrar sesión elimina esa sesión. Las credenciales de demo se entregan
+por separado y no se muestran en la pantalla.
 
-```bash
-ng generate component component-name
+## Comprobaciones
+
+```powershell
+npm run build
+npm test -- --watch=false
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Vitest y jsdom comprueban rutas/login, formularios y alertas. El build no inicia
+servidores ni prepara la base. Prettier: comillas simples, 100 columnas y parser
+Angular para HTML (`.prettierrc`). No hay script de ESLint.
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Ver [preparación completa](../README.md) y [solución de errores](../docs/ENTREGA.md).
