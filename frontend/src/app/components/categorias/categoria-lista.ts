@@ -2,25 +2,26 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { RouterLink } from '@angular/router';
 import { Categoria } from '../../interfaces/categoria';
 import { CategoriaService } from '../../services/categoria.service';
-import { ConfirmDialog } from '../../shared/confirm-dialog';
+import { AlertasService } from '../../shared/alertas.service';
+import { firstValueFrom } from 'rxjs';
 import { mensajeError } from '../../shared/error-message';
 
 @Component({
   selector: 'app-categoria-lista',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ConfirmDialog],
+  imports: [RouterLink],
   templateUrl: './categoria-lista.html',
 })
 export class CategoriaLista implements OnInit {
   private readonly categoriaService = inject(CategoriaService);
+  private readonly alertas = inject(AlertasService);
 
   protected readonly categorias = signal<Categoria[]>([]);
   protected readonly cargando = signal(false);
   protected readonly error = signal('');
   protected readonly soloActivas = signal(false);
 
-  protected readonly confirmando = signal(false);
-  protected readonly categoriaSeleccionada = signal<Categoria | null>(null);
+  protected readonly cambiandoEstado = signal(false);
 
   ngOnInit(): void {
     this.cargar();
@@ -47,31 +48,35 @@ export class CategoriaLista implements OnInit {
     this.cargar();
   }
 
-  protected solicitarCambioEstado(categoria: Categoria): void {
-    this.categoriaSeleccionada.set(categoria);
-    this.confirmando.set(true);
-  }
-
-  protected cancelarCambioEstado(): void {
-    this.confirmando.set(false);
-    this.categoriaSeleccionada.set(null);
-  }
-
-  protected confirmarCambioEstado(): void {
-    const categoria = this.categoriaSeleccionada();
-    if (!categoria) {
-      return;
+  // Las reglas sobre categorías con productos siguen siendo validadas por la API.
+  protected async solicitarCambioEstado(categoria: Categoria): Promise<void> {
+    if (this.cambiandoEstado()) return;
+    this.cambiandoEstado.set(true);
+    const accion = categoria.activo ? 'Desactivar' : 'Activar';
+    try {
+      const confirmado = await this.alertas.confirmar(
+        `${accion} categoría`,
+        `${categoria.nombre}. ` +
+          (categoria.activo
+            ? 'No se eliminará. Las categorías con productos asociados no pueden desactivarse.'
+            : 'Volverá a estar disponible para los productos.'),
+        `Sí, ${accion.toLowerCase()}`,
+        categoria.activo,
+      );
+      if (!confirmado) return;
+      await firstValueFrom(
+        this.categoriaService.cambiarEstado(categoria.idCategoria, !categoria.activo),
+      );
+      this.cargar();
+      this.alertas.exito(
+        categoria.activo ? 'Categoría desactivada' : 'Categoría activada',
+        categoria.nombre,
+      );
+    } catch (error) {
+      this.error.set(mensajeError(error));
+      this.alertas.fallo('No se pudo cambiar el estado', this.error());
+    } finally {
+      this.cambiandoEstado.set(false);
     }
-
-    this.categoriaService.cambiarEstado(categoria.idCategoria, !categoria.activo).subscribe({
-      next: () => {
-        this.cancelarCambioEstado();
-        this.cargar();
-      },
-      error: (error) => {
-        this.error.set(mensajeError(error));
-        this.cancelarCambioEstado();
-      },
-    });
   }
 }

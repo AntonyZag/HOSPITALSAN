@@ -12,6 +12,7 @@ import { InventarioService } from '../../services/inventario.service';
 import { mensajeError } from '../../shared/error-message';
 import { fechaIso } from '../../shared/fechas-inventario';
 import { TablaMovimientos } from './tabla-movimientos';
+import { AlertasService } from '../../shared/alertas.service';
 
 interface FiltrosForm {
   idProducto: string;
@@ -37,6 +38,7 @@ const FILTROS_VACIOS: FiltrosForm = {
 })
 export class Historial implements OnInit {
   private readonly inventario = inject(InventarioService);
+  private readonly alertas = inject(AlertasService);
 
   // Separa el estado de los selectores del estado de la búsqueda.
   protected readonly productos = signal<ProductoOpcion[]>([]);
@@ -81,7 +83,7 @@ export class Historial implements OnInit {
   protected async buscar(evento: Event): Promise<void> {
     evento.preventDefault();
     if (!this.cargando()) {
-      await submit(this.formulario, { action: () => this.cargarMovimientos() });
+      await submit(this.formulario, { action: () => this.cargarMovimientos(true) });
     }
   }
 
@@ -90,7 +92,7 @@ export class Historial implements OnInit {
     void this.cargarMovimientos();
   }
 
-  private async cargarMovimientos(): Promise<void> {
+  private async cargarMovimientos(notificar = false): Promise<void> {
     this.cargando.set(true);
     this.error.set('');
     const { idProducto, tipo, idArea, desde, hasta } = this.filtros();
@@ -105,8 +107,18 @@ export class Historial implements OnInit {
         }),
       );
       this.movimientos.set(movimientos);
+      // Solo el botón Buscar genera un aviso; entrar a la pantalla no interrumpe al usuario.
+      if (notificar) {
+        this.alertas.informacion(
+          movimientos.length ? 'Consulta completada' : 'Sin movimientos',
+          movimientos.length
+            ? `Movimientos encontrados: ${movimientos.length}.`
+            : 'No hay movimientos con los filtros seleccionados.',
+        );
+      }
     } catch (error) {
       this.error.set(mensajeError(error));
+      if (notificar) this.alertas.fallo('No se pudo consultar el historial', this.error());
     } finally {
       this.cargando.set(false);
     }

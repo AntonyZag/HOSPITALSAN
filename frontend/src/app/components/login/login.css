@@ -1,0 +1,262 @@
+/* Fondo celeste y tarjeta flotante inspirados en la referencia del usuario. */
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: linear-gradient(115deg, #85cce5 0%, #acdcf0 48%, #e2f3ff 100%);
+}
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 48px 24px;
+}
+.login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  max-width: 1040px;
+  min-height: 630px;
+  overflow: hidden;
+  border: 1px solid #ffffff9c;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 28px 70px #235d832e;
+}
+
+/* Panel visual: título negro y azul, con la cápsula en lugar del doctor. */
+.login-art {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 38px;
+  background: #f1f6fc;
+  min-width: 0;
+}
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 24px;
+  background: #e4efff;
+  color: #1856ad;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.login-art h2 {
+  font-size: clamp(2.4rem, 3.6vw, 3.25rem);
+  font-weight: 750;
+  line-height: 1.07;
+  letter-spacing: -0.055em;
+  color: #131b25;
+  margin: 18px 0 28px;
+}
+.login-art h2 span,
+.login-form-content h1 span {
+  color: #155bc4;
+}
+.login-art-image {
+  position: relative;
+  align-self: stretch;
+  flex: 1;
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #d4e3ff;
+}
+.login-art-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 23%;
+}
+.login-image-brand {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid #e3e9f2;
+  border-radius: 8px;
+  background: #fff;
+  color: #172337;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Formulario blanco con campos rectangulares y acción azul degradada. */
+.login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  min-width: 0;
+}
+.login-form-content {
+  width: 100%;
+  max-width: 410px;
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #1958ac;
+  font-size: 0.82rem;
+  font-weight: 650;
+  margin-bottom: 20px;
+}
+.login-form-content h1 {
+  color: #131b25;
+  font-size: 2.25rem;
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  margin: 0 0 12px;
+}
+.login-description {
+  font-size: 0.97rem;
+  line-height: 1.6;
+  color: #6c737c;
+  margin: 0 0 28px;
+}
+.login-field {
+  margin-bottom: 20px;
+}
+.login-field label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #17202b;
+  margin-bottom: 8px;
+}
+.login-field .form-control {
+  height: 48px;
+  min-height: 48px;
+  padding: 10px 13px;
+  border: 1px solid #dce1e8;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9rem;
+}
+.login-field .form-control:focus {
+  border-color: #70a4e9;
+  box-shadow: 0 0 0 3px #185fc21a;
+}
+.login-field .form-control.is-invalid {
+  border-color: #c95c6b;
+  background-image: none;
+}
+.login-password {
+  display: flex;
+}
+.login-password .form-control {
+  min-width: 0;
+  border-radius: 6px 0 0 6px;
+  border-right: 0;
+}
+.login-password-toggle {
+  width: 44px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 1px solid #dce1e8;
+  border-radius: 0 6px 6px 0;
+  background: #fff;
+  color: #7f8b99;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.login-password-toggle:hover {
+  color: #155bc4;
+  background: #f0f6ff;
+}
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(105deg, #1d46ce, #0876b6);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 650;
+  box-shadow: 0 3px 8px #195bc312;
+}
+.login-submit:hover,
+.login-submit:active {
+  background: linear-gradient(105deg, #183bb4, #0768a3);
+  color: #fff;
+}
+.login-submit:disabled {
+  opacity: 0.65;
+}
+
+/* La tarjeta se apila en celular y conserva el acceso cómodo al formulario. */
+@media (max-width: 991.98px) {
+  .login-art {
+    padding: 28px;
+  }
+  .login-form-panel {
+    padding: 36px 28px;
+  }
+  .login-art h2 {
+    font-size: 2.6rem;
+  }
+  .login-form-content h1 {
+    font-size: 2rem;
+  }
+}
+@media (max-width: 767.98px) {
+  .login-page {
+    padding: 24px 16px;
+  }
+  .login-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    border-radius: 22px;
+  }
+  .login-art {
+    padding: 24px;
+  }
+  .login-badge {
+    font-size: 0.74rem;
+  }
+  .login-art h2 {
+    font-size: 2.25rem;
+    margin: 16px 0 20px;
+  }
+  .login-art-image {
+    min-height: 200px;
+    flex: auto;
+  }
+  .login-art-image img {
+    object-position: center 22%;
+  }
+  .login-image-brand {
+    font-size: 0.65rem;
+    bottom: 10px;
+    left: 10px;
+    padding: 7px 9px;
+  }
+  .login-form-panel {
+    padding: 30px 24px;
+  }
+  .login-brand {
+    margin-bottom: 16px;
+  }
+  .login-description {
+    font-size: 0.88rem;
+    margin-bottom: 24px;
+  }
+  .login-field label {
+    font-size: 0.86rem;
+  }
+}

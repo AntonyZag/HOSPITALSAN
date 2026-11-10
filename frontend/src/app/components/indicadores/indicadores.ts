@@ -13,6 +13,7 @@ import { InventarioService } from '../../services/inventario.service';
 import { mensajeError } from '../../shared/error-message';
 import { fechaIso, hoyLima } from '../../shared/fechas-inventario';
 import { TablaMovimientos } from '../historial/tabla-movimientos';
+import { AlertasService } from '../../shared/alertas.service';
 
 interface PeriodoForm {
   desde: Date | null;
@@ -36,6 +37,7 @@ function periodoInicial(): PeriodoForm {
 })
 export class Indicadores implements OnInit {
   private readonly inventario = inject(InventarioService);
+  private readonly alertas = inject(AlertasService);
 
   // Separa la foto actual del inventario de los resultados por fechas.
   protected readonly resumen = signal<ResumenInventario | null>(null);
@@ -64,7 +66,8 @@ export class Indicadores implements OnInit {
   }
 
   // Actualiza las cifras, el stock bajo y los vencimientos desde el servidor.
-  protected async cargarInventario(): Promise<void> {
+  protected async cargarInventario(notificar = false): Promise<void> {
+    if (this.cargandoInventario()) return;
     this.cargandoInventario.set(true);
     this.errorInventario.set('');
     try {
@@ -78,8 +81,16 @@ export class Indicadores implements OnInit {
       this.resumen.set(datos.resumen);
       this.stockBajo.set(datos.stockBajo);
       this.vencimientos.set(datos.vencimientos);
+      // El aviso confirma la actualización manual, sin aparecer en la carga inicial.
+      if (notificar)
+        this.alertas.exito(
+          'Inventario actualizado',
+          'Las cifras y alertas ya reflejan los datos de la API.',
+        );
     } catch (error) {
       this.errorInventario.set(mensajeError(error));
+      if (notificar)
+        this.alertas.fallo('No se pudo actualizar el inventario', this.errorInventario());
     } finally {
       this.cargandoInventario.set(false);
     }
@@ -89,11 +100,11 @@ export class Indicadores implements OnInit {
   protected async consultar(evento: Event): Promise<void> {
     evento.preventDefault();
     if (!this.cargandoPeriodo()) {
-      await submit(this.formulario, { action: () => this.cargarPeriodo() });
+      await submit(this.formulario, { action: () => this.cargarPeriodo(true) });
     }
   }
 
-  private async cargarPeriodo(): Promise<void> {
+  private async cargarPeriodo(notificar = false): Promise<void> {
     const { desde, hasta } = this.periodo();
     const rango = { desde: fechaIso(desde), hasta: fechaIso(hasta) };
     this.cargandoPeriodo.set(true);
@@ -107,8 +118,15 @@ export class Indicadores implements OnInit {
       );
       this.mayoresSalidas.set(datos.mayoresSalidas);
       this.movimientos.set(datos.movimientos);
+      // El botón de consulta informa el resultado sin pedir confirmaciones para leer datos.
+      if (notificar)
+        this.alertas.informacion(
+          datos.movimientos.length ? 'Periodo consultado' : 'Sin movimientos en el periodo',
+          `Movimientos: ${datos.movimientos.length}. Productos con salidas: ${datos.mayoresSalidas.length}.`,
+        );
     } catch (error) {
       this.errorPeriodo.set(mensajeError(error));
+      if (notificar) this.alertas.fallo('No se pudo consultar el periodo', this.errorPeriodo());
     } finally {
       this.cargandoPeriodo.set(false);
     }

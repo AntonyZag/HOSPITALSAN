@@ -6,17 +6,19 @@ import { Producto } from '../../interfaces/producto';
 import { CategoriaService } from '../../services/categoria.service';
 import { ProductoService } from '../../services/producto.service';
 import { mensajeError } from '../../shared/error-message';
-import { ConfirmDialog } from '../../shared/confirm-dialog';
+import { AlertasService } from '../../shared/alertas.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-producto-lista',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, DecimalPipe, ConfirmDialog],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   templateUrl: './producto-lista.html',
 })
 export class ProductoLista implements OnInit {
   private readonly productoService = inject(ProductoService);
   private readonly categoriaService = inject(CategoriaService);
+  private readonly alertas = inject(AlertasService);
 
   protected readonly productos = signal<Producto[]>([]);
   protected readonly categorias = signal<Categoria[]>([]);
@@ -29,8 +31,7 @@ export class ProductoLista implements OnInit {
   protected readonly soloStockBajo = signal(false);
   protected readonly diasVencimiento = signal<number | null>(null);
 
-  protected readonly confirmando = signal(false);
-  protected readonly productoSeleccionado = signal<Producto | null>(null);
+  protected readonly cambiandoEstado = signal(false);
 
   ngOnInit(): void {
     this.cargarCategorias();
@@ -103,32 +104,36 @@ export class ProductoLista implements OnInit {
     this.diasVencimiento.set(value ? Number(value) : null);
   }
 
-  protected solicitarCambioEstado(producto: Producto): void {
-    this.productoSeleccionado.set(producto);
-    this.confirmando.set(true);
-  }
-
-  protected cancelarCambioEstado(): void {
-    this.confirmando.set(false);
-    this.productoSeleccionado.set(null);
-  }
-
-  protected confirmarCambioEstado(): void {
-    const producto = this.productoSeleccionado();
-    if (!producto) {
-      return;
+  // Solo escribe después de confirmar; cancelar conserva el estado y el historial.
+  protected async solicitarCambioEstado(producto: Producto): Promise<void> {
+    if (this.cambiandoEstado()) return;
+    this.cambiandoEstado.set(true);
+    const accion = producto.activo ? 'Desactivar' : 'Activar';
+    try {
+      const confirmado = await this.alertas.confirmar(
+        `${accion} producto`,
+        `${producto.nombre}. ` +
+          (producto.activo
+            ? 'No se eliminará su historial y no podrá recibir nuevas entradas.'
+            : 'Volverá a estar disponible para nuevas entradas.'),
+        `Sí, ${accion.toLowerCase()}`,
+        producto.activo,
+      );
+      if (!confirmado) return;
+      await firstValueFrom(
+        this.productoService.cambiarEstado(producto.idProducto, !producto.activo),
+      );
+      this.cargarProductos();
+      this.alertas.exito(
+        producto.activo ? 'Producto desactivado' : 'Producto activado',
+        producto.nombre,
+      );
+    } catch (error) {
+      this.error.set(mensajeError(error));
+      this.alertas.fallo('No se pudo cambiar el estado', this.error());
+    } finally {
+      this.cambiandoEstado.set(false);
     }
-
-    this.productoService.cambiarEstado(producto.idProducto, !producto.activo).subscribe({
-      next: () => {
-        this.cancelarCambioEstado();
-        this.cargarProductos();
-      },
-      error: (error) => {
-        this.error.set(mensajeError(error));
-        this.cancelarCambioEstado();
-      },
-    });
   }
 
   protected estaPorVencer(fecha: string | null): boolean {

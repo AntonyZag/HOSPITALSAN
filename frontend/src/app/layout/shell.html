@@ -1,0 +1,88 @@
+<!-- La barra permite desplegar la navegación lateral en celular. -->
+<div class="app-layout" (keydown.escape)="menuAbierto.set(false)">
+  <a
+    class="skip-link"
+    href="#contenido"
+    (click)="$event.preventDefault(); contenido.focus(); contenido.scrollIntoView()"
+    >Saltar al contenido</a
+  >
+  <header class="app-topbar">
+    <button
+      class="btn menu-toggle"
+      type="button"
+      [attr.aria-label]="menuAbierto() ? 'Cerrar menú' : 'Abrir menú'"
+      [attr.aria-expanded]="menuAbierto()"
+      aria-controls="menu-inventario"
+      (click)="alternarMenu()"
+    >
+      <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+    <span class="topbar-title">Gestión de inventario</span>
+    <span class="topbar-context"
+      ><i class="bi bi-hospital" aria-hidden="true"></i> Hospital San Gabriel</span
+    >
+  </header>
+
+  <!-- El degradado azul y los iconos de color identifican las siete opciones en ambos tamaños. -->
+  <aside id="menu-inventario" class="app-sidebar" [class.is-open]="menuAbierto()">
+    <a class="hospital-brand" routerLink="/indicadores" (click)="menuAbierto.set(false)">
+      <span class="brand-symbol"><i class="bi bi-hospital" aria-hidden="true"></i></span>
+      <div>
+        <h1>Hospital San Gabriel</h1>
+        <span>Control de inventario</span>
+      </div>
+    </a>
+    <nav aria-label="Navegación principal" class="sidebar-navigation">
+      <p class="nav-section-label">Inventario</p>
+      @for (enlace of enlaces; track enlace.ruta) {
+        <a
+          class="sidebar-link"
+          [routerLink]="enlace.ruta"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="menuAbierto.set(false)"
+        >
+          <span class="sidebar-icon sidebar-icon--{{ enlace.color }}"
+            ><i class="bi {{ enlace.icono }}" aria-hidden="true"></i></span
+          >{{ enlace.texto }}
+        </a>
+      }
+      <div class="sidebar-system">
+        <p class="nav-section-label">Sistema</p>
+        <a
+          class="sidebar-link"
+          routerLink="/diagnostico"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="menuAbierto.set(false)"
+        >
+          <span class="sidebar-icon sidebar-icon--diagnostico"
+            ><i class="bi bi-plug-fill" aria-hidden="true"></i></span
+          >Diagnóstico
+        </a>
+      </div>
+    </nav>
+    <!-- El cierre de sesión está disponible en escritorio y en el menú móvil. -->
+    <button class="sidebar-logout" type="button" (click)="cerrarSesion()">
+      <i class="bi bi-box-arrow-right" aria-hidden="true"></i>Cerrar sesión
+    </button>
+    <div class="sidebar-note">
+      <i class="bi bi-heart-pulse" aria-hidden="true"></i
+      ><span>Información organizada.<br />Mejores decisiones.</span>
+    </div>
+  </aside>
+
+  <!-- El fondo permite cerrar el menú sin cambiar de pantalla. -->
+  @if (menuAbierto()) {
+    <button
+      class="menu-backdrop"
+      type="button"
+      aria-label="Cerrar menú"
+      (click)="menuAbierto.set(false)"
+    ></button>
+  }
+  <div class="app-workspace">
+    <main #contenido id="contenido" class="app-content" tabindex="-1"><router-outlet /></main>
+    <footer class="app-footer">Hospital San Gabriel <span>·</span> Sistema de inventario</footer>
+  </div>
+</div>

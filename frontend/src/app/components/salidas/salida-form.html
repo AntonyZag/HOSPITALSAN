@@ -1,7 +1,13 @@
 <!-- Encabezado y comprobante de la última salida. -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h2 class="h3 mb-0">Registrar salida</h2>
-  <a routerLink="/historial" class="btn btn-outline-secondary">Ver historial</a>
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Movimientos de inventario</span>
+    <h2 class="h3 mb-0">Registrar salida</h2>
+    <p>Entrega de productos a las áreas del hospital, con control de saldo por lote.</p>
+  </div>
+  <a routerLink="/historial" class="btn btn-outline-secondary"
+    ><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Ver historial</a
+  >
 </div>
 
 @if (comprobante(); as salida) {
@@ -27,7 +33,9 @@
     </button>
   </div>
 } @else {
-  <form class="card card-body shadow-sm" novalidate (submit)="guardar($event)">
+  <!-- El detalle conserva los campos y las validaciones del formulario original. -->
+  <form class="card card-body shadow-sm salida-panel" novalidate (submit)="guardar($event)">
+    <h3 class="form-section-title">Detalle de la salida</h3>
     <fieldset class="row g-3" [disabled]="guardando()">
       <div class="col-12 col-md-6">
         <label for="salida-producto" class="form-label">Producto activo</label>
@@ -78,7 +86,45 @@
         }
       </div>
 
-      <!-- El usuario indica cuántas unidades retira, cuándo y para qué área. -->
+      <!-- El saldo procede del lote seleccionado; el aviso no modifica la validación existente. -->
+      <div class="col-12">
+        <div id="salida-saldo" class="stock-summary" aria-live="polite">
+          @if (loteSeleccionado(); as lote) {
+            <div>
+              <span class="stock-summary-label">Saldo disponible del lote</span>
+              <div class="stock-amount">{{ lote.cantidad_disponible }}<small>unidades</small></div>
+            </div>
+            <div class="stock-detail">
+              <strong>Lote {{ lote.numero_lote }}</strong>
+              <span
+                >Vence el
+                {{ lote.fecha_vencimiento + 'T00:00:00Z' | date: 'dd/MM/yyyy' : 'UTC' }}</span
+              >
+            </div>
+          } @else {
+            <div class="stock-placeholder">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <span>Selecciona un producto y un lote para consultar el saldo disponible.</span>
+            </div>
+          }
+        </div>
+        @if (loteSeleccionado(); as lote) {
+          @if ((modelo().cantidad ?? 0) > lote.cantidad_disponible) {
+            <div class="alert alert-danger stock-alert" role="alert">
+              <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+              <div>
+                <strong>Saldo insuficiente</strong>
+                <p>
+                  Solicitas {{ modelo().cantidad }} unidades y hay
+                  {{ lote.cantidad_disponible }} disponibles. Reduce la cantidad para continuar.
+                </p>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Cantidad, fecha y destino conservan sus reglas y mensajes de error. -->
       <div class="col-12 col-md-4">
         <label for="salida-cantidad" class="form-label">Cantidad</label>
         <input
@@ -87,9 +133,11 @@
           type="number"
           step="1"
           [formField]="formulario.cantidad"
+          aria-describedby="salida-saldo salida-cantidad-error"
+          [class.is-invalid]="formulario.cantidad().touched() && formulario.cantidad().invalid()"
         />
         @if (formulario.cantidad().touched() && formulario.cantidad().invalid()) {
-          <div class="invalid-feedback d-block">
+          <div id="salida-cantidad-error" class="invalid-feedback d-block">
             {{ formulario.cantidad().errors()[0]?.message }}
           </div>
         }
@@ -127,13 +175,16 @@
       </div>
     </fieldset>
 
-    <div class="d-flex justify-content-end mt-4">
+    <!-- Acción principal separada visualmente del detalle. -->
+    <div class="form-actions">
+      <a class="btn btn-outline-secondary" routerLink="/historial">Cancelar</a>
       <button
         class="btn btn-primary"
         type="submit"
         [disabled]="guardando() || cargandoLotes() || !!errorLotes()"
       >
-        {{ guardando() ? 'Registrando…' : 'Registrar salida' }}
+        <i class="bi bi-box-arrow-up me-2" aria-hidden="true"></i
+        >{{ guardando() ? 'Registrando…' : 'Registrar salida' }}
       </button>
     </div>
   </form>
