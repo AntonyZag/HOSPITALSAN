@@ -1,10 +1,14 @@
 import { Routes } from '@angular/router';
+import { requiereSesion, soloInvitados } from './auth/sesion.guard';
+import { Shell } from './layout/shell';
 
-export const routes: Routes = [
+// Conserva las rutas existentes dentro del área de inventario.
+const rutasInventario: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'indicadores' },
   {
     path: 'productos',
-    loadComponent: () => import('./components/productos/producto-lista').then((m) => m.ProductoLista),
+    loadComponent: () =>
+      import('./components/productos/producto-lista').then((m) => m.ProductoLista),
   },
   {
     path: 'productos/nuevo',
@@ -61,4 +65,20 @@ export const routes: Routes = [
     loadComponent: () => import('./components/connection-test').then((m) => m.ConnectionTest),
   },
   { path: '**', redirectTo: 'productos' },
+];
+
+// El login queda fuera del menú; el inventario completo requiere una sesión local.
+export const routes: Routes = [
+  {
+    path: 'login',
+    canActivate: [soloInvitados],
+    loadComponent: () => import('./components/login/login').then((m) => m.Login),
+  },
+  {
+    path: '',
+    component: Shell,
+    canActivate: [requiereSesion],
+    canActivateChild: [requiereSesion],
+    children: rutasInventario,
+  },
 ];

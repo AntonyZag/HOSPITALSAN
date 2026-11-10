@@ -1,3 +1,4 @@
+import { AlertasService } from '../../shared/alertas.service';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -48,6 +49,7 @@ interface SalidaFormModel {
   templateUrl: './salida-form.html',
 })
 export class SalidaForm implements OnInit {
+  private readonly alertas = inject(AlertasService);
   private readonly inventario = inject(InventarioService);
   private solicitudLotes = 0;
 
@@ -166,11 +168,26 @@ export class SalidaForm implements OnInit {
     await submit(this.formulario, {
       action: async () => {
         const valor = this.modelo();
-        if (!this.loteSeleccionado() || valor.cantidad === null || valor.fecha === null) {
+        const lote = this.loteSeleccionado();
+        if (!lote || valor.cantidad === null || valor.fecha === null) {
           return;
         }
         this.guardando.set(true);
         try {
+          // La confirmación ocurre después de validar el saldo y antes de enviar la salida.
+          const nombre =
+            this.productos().find((p) => String(p.id_producto) === valor.idProducto)?.nombre ??
+            'el producto';
+          const area =
+            this.areas().find((a) => String(a.id_area) === valor.idArea)?.nombre_area ??
+            'el área elegida';
+          const unidades = valor.cantidad === 1 ? '1 unidad' : `${valor.cantidad} unidades`;
+          const confirmado = await this.alertas.confirmar(
+            'Confirmar salida',
+            `Salida de ${unidades} de ${nombre}.\nLote: ${lote.numero_lote}.\nDestino: ${area}. Fecha: ${fechaIso(valor.fecha)}.\nSe actualizarán el stock y el historial.`,
+            'Registrar salida',
+          );
+          if (!confirmado) return;
           const salida = await firstValueFrom(
             this.inventario.registrarSalida({
               id_producto: Number(valor.idProducto),
@@ -190,8 +207,13 @@ export class SalidaForm implements OnInit {
             motivo: '',
           });
           await this.cargarLotes();
+          this.alertas.exito(
+            'Salida registrada',
+            'Saldo del producto: ' + salida.stock_anterior + ' → ' + salida.stock_posterior + '.',
+          );
         } catch (error) {
           this.errorSalida.set(mensajeError(error));
+          this.alertas.fallo('No se pudo guardar', mensajeError(error));
           if (error instanceof HttpErrorResponse && [409, 422].includes(error.status)) {
             await this.cargarLotes();
           }

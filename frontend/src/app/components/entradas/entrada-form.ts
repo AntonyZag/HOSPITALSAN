@@ -1,3 +1,4 @@
+import { AlertasService } from '../../shared/alertas.service';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, minDate, required, submit } from '@angular/forms/signals';
@@ -38,6 +39,7 @@ function hoyUtc(): Date {
   templateUrl: './entrada-form.html',
 })
 export class EntradaForm implements OnInit {
+  private readonly alertas = inject(AlertasService);
   private readonly entradaService = inject(EntradaService);
   private readonly productoService = inject(ProductoService);
 
@@ -86,6 +88,7 @@ export class EntradaForm implements OnInit {
 
   protected async guardar(event: Event): Promise<void> {
     event.preventDefault();
+    if (this.guardando()) return;
     this.error.set('');
     this.exito.set('');
     this.ultimaEntrada.set(null);
@@ -107,6 +110,17 @@ export class EntradaForm implements OnInit {
 
         this.guardando.set(true);
         try {
+          // Se confirma solo un formulario válido, antes de modificar las existencias.
+          const nombre =
+            this.productos().find((p) => p.idProducto === payload.idProducto)?.nombre ??
+            'el producto';
+          const unidades = payload.cantidad === 1 ? '1 unidad' : `${payload.cantidad} unidades`;
+          const confirmado = await this.alertas.confirmar(
+            'Confirmar entrada',
+            `Entrada de ${unidades} de ${nombre}.\nLote: ${payload.numeroLote}.\nVencimiento: ${payload.fechaVencimiento}.\nSe actualizarán el stock y el historial.`,
+            'Registrar entrada',
+          );
+          if (!confirmado) return;
           const entrada = await firstValueFrom(this.entradaService.registrar(payload));
           this.ultimaEntrada.set(entrada);
           this.exito.set(
@@ -115,8 +129,13 @@ export class EntradaForm implements OnInit {
           );
           this.form().reset({ ...MODELO_INICIAL });
           this.lotes.set([]);
+          this.alertas.exito(
+            'Entrada registrada',
+            'Saldo del producto: ' + entrada.stockAnterior + ' → ' + entrada.stockPosterior + '.',
+          );
         } catch (error) {
           this.error.set(mensajeError(error));
+          this.alertas.fallo('No se pudo guardar', mensajeError(error));
         } finally {
           this.guardando.set(false);
         }

@@ -1,91 +1,51 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SesionService } from '../auth/sesion.service';
+import { AlertasService } from '../shared/alertas.service';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
-  template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/indicadores">
-          <i class="bi bi-hospital fs-3"></i>
-          <h1 class="h4 mb-0">Hospital San Gabriel</h1>
-        </a>
-
-        <button
-          class="navbar-toggler"
-          type="button"
-          aria-label="Abrir menú"
-          [attr.aria-expanded]="menuAbierto()"
-          (click)="alternarMenu()"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" [class.show]="menuAbierto()">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a
-                class="nav-link"
-                routerLink="/productos"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: false }"
-              >
-                <i class="bi bi-box-seam me-1"></i>Productos
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/categorias" routerLinkActive="active">
-                <i class="bi bi-tags me-1"></i>Categorías
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/entradas" routerLinkActive="active">
-                <i class="bi bi-box-arrow-in-down me-1"></i>Entradas
-              </a>
-            </li>
-            <!-- Enlaces para consultar inventario y registrar retiros. -->
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/salidas" routerLinkActive="active">
-                <i class="bi bi-box-arrow-up me-1"></i>Salidas
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/historial" routerLinkActive="active">
-                <i class="bi bi-clock-history me-1"></i>Historial
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/indicadores" routerLinkActive="active">
-                <i class="bi bi-bar-chart me-1"></i>Indicadores
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/diagnostico" routerLinkActive="active">
-                <i class="bi bi-plug me-1"></i>Diagnóstico
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-    <main class="container py-4">
-      <router-outlet />
-    </main>
-
-    <footer class="border-top py-3 mt-4">
-      <div class="container text-center text-body-secondary small">
-        Hospital San Gabriel · Sistema de inventario
-      </div>
-    </footer>
-  `,
+  templateUrl: './shell.html',
 })
 export class Shell {
+  private readonly sesion = inject(SesionService);
+  private readonly router = inject(Router);
+  private readonly alertas = inject(AlertasService);
+
+  // Conserva las rutas y asigna un color reconocible a cada icono del menú.
+  protected readonly enlaces = [
+    { ruta: '/indicadores', texto: 'Indicadores', icono: 'bi-grid-1x2', color: 'indicadores' },
+    { ruta: '/productos', texto: 'Productos', icono: 'bi-box-seam-fill', color: 'neutral' },
+    { ruta: '/categorias', texto: 'Categorías', icono: 'bi-tags-fill', color: 'neutral' },
+    {
+      ruta: '/entradas',
+      texto: 'Entradas',
+      icono: 'bi-arrow-down-right-square-fill',
+      color: 'entradas',
+    },
+    { ruta: '/salidas', texto: 'Salidas', icono: 'bi-arrow-up-left-square-fill', color: 'salidas' },
+    { ruta: '/historial', texto: 'Historial', icono: 'bi-clock-history', color: 'neutral' },
+  ];
+
+  // El menú móvil se cierra al navegar o al pulsar Escape.
   protected readonly menuAbierto = signal(false);
 
   protected alternarMenu(): void {
     this.menuAbierto.update((abierto) => !abierto);
+  }
+
+  // Pide confirmación antes de cerrar la sesión y volver al acceso.
+  protected async cerrarSesion(): Promise<void> {
+    const confirmado = await this.alertas.confirmar(
+      '¿Cerrar sesión?',
+      'Volverás a la pantalla de acceso.',
+      'Sí, cerrar sesión',
+    );
+    if (!confirmado) return;
+    this.sesion.cerrar();
+    this.menuAbierto.set(false);
+    await this.router.navigate(['/login'], { replaceUrl: true });
   }
 }

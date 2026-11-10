@@ -1,14 +1,26 @@
-<!-- Cifras actuales del inventario. -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h2 class="h3 mb-0">Indicadores de inventario</h2>
-  <button
-    type="button"
-    class="btn btn-outline-primary"
-    [disabled]="cargandoInventario()"
-    (click)="cargarInventario()"
-  >
-    Actualizar inventario
-  </button>
+<!-- Resumen principal con las cifras actuales que entrega la API. -->
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Visión general</span>
+    <h2 class="h3 mb-0">Indicadores de inventario</h2>
+    <p>El estado de tus existencias, en un solo lugar.</p>
+  </div>
+  <div class="page-actions">
+    <a
+      class="btn btn-outline-secondary"
+      href="#indicadores-periodo"
+      (click)="$event.preventDefault(); bloquePeriodo.scrollIntoView()"
+      ><i class="bi bi-calendar3 me-2" aria-hidden="true"></i>Ver periodo</a
+    >
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="cargandoInventario()"
+      (click)="cargarInventario(true)"
+    >
+      <i class="bi bi-arrow-clockwise me-2" aria-hidden="true"></i>Actualizar inventario
+    </button>
+  </div>
 </div>
 
 @if (cargandoInventario()) {
@@ -16,101 +28,130 @@
 } @else if (errorInventario()) {
   <div class="alert alert-danger" role="alert">{{ errorInventario() }}</div>
 } @else if (resumen(); as datos) {
-  <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6">
-      <div class="card card-body shadow-sm h-100">
-        <h3 class="h6 text-body-secondary">Productos activos</h3>
-        <p class="fs-3 fw-semibold mb-0">{{ datos.productos_activos | number }}</p>
-      </div>
-    </div>
-    <div class="col-12 col-sm-6">
-      <div class="card card-body shadow-sm h-100">
-        <h3 class="h6 text-body-secondary">Valor referencial del inventario</h3>
-        <p class="fs-3 fw-semibold mb-0">{{ datos.valor_inventario | number: '1.2-2' }}</p>
-      </div>
-    </div>
+  <div class="summary-grid">
+    <section class="summary-card" aria-labelledby="resumen-activos">
+      <span class="summary-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+      <h3 id="resumen-activos">Productos activos</h3>
+      <p class="summary-value">{{ datos.productos_activos | number }}</p>
+      <span class="summary-note">Disponibles en el catálogo del hospital</span>
+    </section>
+    <section class="summary-card" aria-labelledby="resumen-valor">
+      <span class="summary-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+      <h3 id="resumen-valor">Valor referencial del inventario</h3>
+      <p class="summary-value">{{ datos.valor_inventario | number: '1.2-2' }}</p>
+      <span class="summary-note">Según las existencias y precios registrados</span>
+    </section>
   </div>
 
-  <!-- Listas de productos bajo el mínimo y lotes que requieren atención. -->
-  <section class="mb-4" aria-labelledby="indicadores-stock">
-    <h3 id="indicadores-stock" class="h5">Productos con stock bajo</h3>
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Producto</th>
-            <th scope="col" class="text-end">Stock actual</th>
-            <th scope="col" class="text-end">Stock mínimo</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (producto of stockBajo(); track producto.id_producto) {
+  <!-- Los iconos replican la referencia: amarillo para stock bajo y rojo para vencimientos. -->
+  <div class="attention-grid">
+    <section class="attention-card" aria-labelledby="indicadores-stock">
+      <div class="section-heading">
+        <span class="section-icon warning"
+          ><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i
+        ></span>
+        <div>
+          <h3 id="indicadores-stock">Productos con stock bajo</h3>
+          <p>Existencias iguales o inferiores al mínimo.</p>
+        </div>
+        <span class="badge text-bg-warning section-count">{{ stockBajo().length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
             <tr>
-              <td>{{ producto.codigo }}</td>
-              <td>
-                {{ producto.nombre_producto }}
-                @if (!producto.activo) {
-                  <span class="badge text-bg-secondary">Inactivo</span>
-                }
-              </td>
-              <td class="text-end">{{ producto.stock_actual }}</td>
-              <td class="text-end">{{ producto.stock_minimo }}</td>
+              <th scope="col">Producto</th>
+              <th scope="col" class="text-end">Stock</th>
+              <th scope="col" class="text-end">Mínimo</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="4" class="text-body-secondary">No hay productos con stock bajo.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+          </thead>
+          <tbody>
+            @for (producto of stockBajo(); track producto.id_producto) {
+              <tr>
+                <td>
+                  <span class="fw-semibold">{{ producto.nombre_producto }}</span
+                  ><span class="table-subtitle">{{ producto.codigo }}</span>
+                  @if (!producto.activo) {
+                    <span class="badge text-bg-secondary mt-1">Inactivo</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <span class="badge text-bg-warning">{{ producto.stock_actual }}</span>
+                </td>
+                <td class="text-end">{{ producto.stock_minimo }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="text-body-secondary">No hay productos con stock bajo.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <section class="mb-4" aria-labelledby="indicadores-vencimientos">
-    <h3 id="indicadores-vencimientos" class="h5">Lotes vencidos y próximos a vencer</h3>
-    <p class="text-body-secondary">Se muestran lotes con existencias y un aviso de 30 días.</p>
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th scope="col">Producto</th>
-            <th scope="col">Lote</th>
-            <th scope="col">Fecha de vencimiento</th>
-            <th scope="col">Estado</th>
-            <th scope="col" class="text-end">Unidades</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (lote of vencimientos(); track lote.id_lote) {
+    <section class="attention-card" aria-labelledby="indicadores-vencimientos">
+      <div class="section-heading">
+        <span class="section-icon danger"
+          ><i class="bi bi-calendar-x-fill" aria-hidden="true"></i
+        ></span>
+        <div>
+          <h3 id="indicadores-vencimientos">Lotes por vencer y vencidos</h3>
+          <p>Lotes con existencias · aviso de 30 días.</p>
+        </div>
+        <span class="badge text-bg-warning section-count">{{ vencimientos().length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
             <tr>
-              <td>{{ lote.codigo }} · {{ lote.nombre_producto }}</td>
-              <td>{{ lote.numero_lote }}</td>
-              <td>{{ lote.fecha_vencimiento + 'T00:00:00Z' | date: 'dd/MM/yyyy' : 'UTC' }}</td>
-              <td>
-                @if (lote.estado === 'VENCIDO') {
-                  <span class="badge text-bg-danger">Vencido</span>
-                } @else {
-                  <span class="badge text-bg-warning">Próximo a vencer</span>
-                }
-              </td>
-              <td class="text-end">{{ lote.cantidad_disponible }}</td>
+              <th scope="col">Producto / lote</th>
+              <th scope="col">Vencimiento</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="text-end">Unidades</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="5" class="text-body-secondary">No hay lotes para mostrar.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
+          </thead>
+          <tbody>
+            @for (lote of vencimientos(); track lote.id_lote) {
+              <tr>
+                <td>
+                  <span class="fw-semibold">{{ lote.nombre_producto }}</span
+                  ><span class="table-subtitle">{{ lote.codigo }} · {{ lote.numero_lote }}</span>
+                </td>
+                <td class="text-nowrap">
+                  {{ lote.fecha_vencimiento + 'T00:00:00Z' | date: 'dd/MM/yyyy' : 'UTC' }}
+                </td>
+                <td>
+                  @if (lote.estado === 'VENCIDO') {
+                    <span class="badge text-bg-danger">Vencido</span>
+                  } @else {
+                    <span class="badge text-bg-warning">Próximo a vencer</span>
+                  }
+                </td>
+                <td class="text-end">{{ lote.cantidad_disponible }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="text-body-secondary">No hay lotes para mostrar.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 }
 
-<!-- El rango filtra los dos reportes que aparecen debajo. -->
-<section aria-labelledby="indicadores-periodo">
-  <h3 id="indicadores-periodo" class="h4">Consultas por periodo</h3>
-  <form class="card card-body shadow-sm mb-4" novalidate (submit)="consultar($event)">
+<!-- El periodo y sus dos reportes comparten un bloque para facilitar la consulta. -->
+<section #bloquePeriodo class="card period-panel" aria-labelledby="indicadores-periodo">
+  <div class="section-heading">
+    <span class="section-icon blue"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
+    <div>
+      <h3 id="indicadores-periodo">Consultas por periodo</h3>
+      <p>Revisa las salidas y los movimientos dentro de un rango de fechas.</p>
+    </div>
+  </div>
+  <form class="period-filter" novalidate (submit)="consultar($event)">
     <fieldset class="row g-3 align-items-start" [disabled]="cargandoPeriodo()">
       <div class="col-12 col-sm-6 col-md-4">
         <label for="indicadores-desde" class="form-label">Desde (Lima)</label>
@@ -137,43 +178,47 @@
         }
       </div>
       <div class="col-12 col-md-4 align-self-md-end">
-        <button class="btn btn-primary" type="submit">Consultar periodo</button>
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-search me-2" aria-hidden="true"></i>Consultar periodo
+        </button>
       </div>
     </fieldset>
   </form>
 
-  @if (cargandoPeriodo()) {
-    <p class="text-body-secondary" role="status">Cargando datos del periodo…</p>
-  } @else if (errorPeriodo()) {
-    <div class="alert alert-danger" role="alert">{{ errorPeriodo() }}</div>
-  } @else {
-    <h4 class="h5">Productos con mayores salidas</h4>
-    <div class="table-responsive mb-4">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Producto</th>
-            <th scope="col" class="text-end">Unidades retiradas</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (producto of mayoresSalidas(); track producto.id_producto) {
+  <!-- Los resultados conservan la tabla compartida y los mismos datos de movimientos. -->
+  <div class="period-results">
+    @if (cargandoPeriodo()) {
+      <p class="text-body-secondary" role="status">Cargando datos del periodo…</p>
+    } @else if (errorPeriodo()) {
+      <div class="alert alert-danger" role="alert">{{ errorPeriodo() }}</div>
+    } @else {
+      <h4>Productos con mayores salidas</h4>
+      <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle">
+          <thead>
             <tr>
-              <td>{{ producto.codigo }}</td>
-              <td>{{ producto.nombre_producto }}</td>
-              <td class="text-end">{{ producto.unidades_retiradas }}</td>
+              <th scope="col">Código</th>
+              <th scope="col">Producto</th>
+              <th scope="col" class="text-end">Unidades retiradas</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="3" class="text-body-secondary">No hubo salidas en este periodo.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <h4 class="h5">Movimientos del periodo</h4>
-    <app-tabla-movimientos [movimientos]="movimientos()" />
-  }
+          </thead>
+          <tbody>
+            @for (producto of mayoresSalidas(); track producto.id_producto) {
+              <tr>
+                <td>{{ producto.codigo }}</td>
+                <td>{{ producto.nombre_producto }}</td>
+                <td class="text-end">{{ producto.unidades_retiradas }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="text-body-secondary">No hubo salidas en este periodo.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <h4>Movimientos del periodo</h4>
+      <app-tabla-movimientos [movimientos]="movimientos()" />
+    }
+  </div>
 </section>

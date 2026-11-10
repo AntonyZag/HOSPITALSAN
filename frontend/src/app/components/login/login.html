@@ -1,0 +1,92 @@
+<!-- Tarjeta flotante sobre fondo celeste, con dos paneles como en la referencia. -->
+<div class="login-page">
+  <main class="login-layout">
+    <section class="login-art" aria-labelledby="login-bienvenida">
+      <span class="login-badge"
+        ><i class="bi bi-grid-1x2" aria-hidden="true"></i>Sistema de inventario</span
+      >
+      <h2 id="login-bienvenida">Inventario<br /><span>hospitalario.</span></h2>
+      <!-- Se reutiliza la cápsula existente, sin modificar la imagen original. -->
+      <div class="login-art-image">
+        <img
+          src="/images/login-medicamento.png"
+          alt="Cápsula azul y blanca sobre una cinta plateada"
+          fetchpriority="high"
+        />
+        <span class="login-image-brand"
+          ><i class="bi bi-hospital" aria-hidden="true"></i>Hospital San Gabriel</span
+        >
+      </div>
+    </section>
+
+    <!-- El diseño cambia; los campos, las validaciones y el envío conservan sus enlaces. -->
+    <section class="login-form-panel" aria-labelledby="login-titulo">
+      <div class="login-form-content">
+        <div class="login-brand">
+          <i class="bi bi-hospital" aria-hidden="true"></i>Hospital San Gabriel
+        </div>
+        <h1 id="login-titulo">Iniciar <span>sesión</span></h1>
+        <p class="login-description">Ingresa con tu correo para abrir el panel de inventario.</p>
+        <form novalidate (submit)="ingresar($event)">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+          <div class="login-field">
+            <label for="login-correo">Correo electrónico</label>
+            <input
+              id="login-correo"
+              class="form-control"
+              type="email"
+              autocomplete="username"
+              [formField]="formulario.correo"
+              [class.is-invalid]="formulario.correo().touched() && formulario.correo().invalid()"
+              aria-describedby="login-correo-error"
+            />
+            @if (formulario.correo().touched() && formulario.correo().invalid()) {
+              <div id="login-correo-error" class="invalid-feedback d-block">
+                {{ formulario.correo().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+          <div class="login-field">
+            <label for="login-clave">Contraseña</label>
+            <div class="login-password">
+              <input
+                id="login-clave"
+                class="form-control"
+                [type]="mostrarClave() ? 'text' : 'password'"
+                autocomplete="current-password"
+                [formField]="formulario.clave"
+                [class.is-invalid]="formulario.clave().touched() && formulario.clave().invalid()"
+                aria-describedby="login-clave-error"
+              />
+              <button
+                type="button"
+                class="login-password-toggle"
+                [attr.aria-label]="mostrarClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                [attr.aria-pressed]="mostrarClave()"
+                (click)="alternarClave()"
+              >
+                <i
+                  class="bi"
+                  [class.bi-eye]="!mostrarClave()"
+                  [class.bi-eye-slash]="mostrarClave()"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
+            @if (formulario.clave().touched() && formulario.clave().invalid()) {
+              <div id="login-clave-error" class="invalid-feedback d-block">
+                {{ formulario.clave().errors()[0]?.message }}
+              </div>
+            }
+          </div>
+          <button type="submit" class="btn btn-primary login-submit" [disabled]="entrando()">
+            {{ entrando() ? 'Ingresando…' : 'Ingresar al inventario'
+            }}<i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>

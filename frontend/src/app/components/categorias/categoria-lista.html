@@ -1,4 +1,5 @@
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<!-- Encabezado común con título, contexto y acciones de la pantalla. -->
+<div class="page-heading">
   <div>
     <h2 class="h3 mb-1">Categorías</h2>
     <p class="text-body-secondary mb-0">Registro y administración de categorías de productos.</p>
@@ -79,6 +80,8 @@
                   [class.btn-outline-danger]="categoria.activo"
                   [class.btn-outline-success]="!categoria.activo"
                   [title]="categoria.activo ? 'Desactivar' : 'Activar'"
+                  [disabled]="cambiandoEstado() || cargando()"
+                  [attr.aria-label]="categoria.activo ? 'Desactivar' : 'Activar'"
                   (click)="solicitarCambioEstado(categoria)"
                 >
                   <i
@@ -101,15 +104,3 @@
     </table>
   </div>
 </div>
-
-<app-confirm-dialog
-  [visible]="confirmando()"
-  [titulo]="categoriaSeleccionada()?.activo ? 'Desactivar categoría' : 'Activar categoría'"
-  [mensaje]="
-    categoriaSeleccionada()?.activo
-      ? 'La categoría se desactivará lógicamente. No se permite desactivar una categoría con productos asociados.'
-      : 'La categoría volverá a estar activa.'
-  "
-  (confirmar)="confirmarCambioEstado()"
-  (cancelar)="cancelarCambioEstado()"
-/>

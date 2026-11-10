@@ -1,3 +1,4 @@
+import { AlertasService } from '../../shared/alertas.service';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, required, submit } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -35,6 +36,7 @@ const MODELO_INICIAL: ProductoFormModel = {
   templateUrl: './producto-form.html',
 })
 export class ProductoForm implements OnInit {
+  private readonly alertas = inject(AlertasService);
   private readonly productoService = inject(ProductoService);
   private readonly categoriaService = inject(CategoriaService);
   private readonly router = inject(Router);
@@ -94,6 +96,7 @@ export class ProductoForm implements OnInit {
 
   protected async guardar(event: Event): Promise<void> {
     event.preventDefault();
+    if (this.guardando()) return;
     this.error.set('');
 
     await submit(this.form, {
@@ -126,8 +129,14 @@ export class ProductoForm implements OnInit {
             await firstValueFrom(this.productoService.crear(payload));
           }
           await this.router.navigate(['/productos']);
+          // Confirma el resultado después de actualizar el listado.
+          this.alertas.exito(
+            id !== null ? 'Producto actualizado' : 'Producto registrado',
+            payload.nombre,
+          );
         } catch (error) {
           this.error.set(mensajeError(error));
+          this.alertas.fallo('No se pudo guardar', mensajeError(error));
         } finally {
           this.guardando.set(false);
         }

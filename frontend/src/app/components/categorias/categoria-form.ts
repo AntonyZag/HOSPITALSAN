@@ -1,3 +1,4 @@
+import { AlertasService } from '../../shared/alertas.service';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, required, submit } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,6 +19,7 @@ interface CategoriaFormModel {
   templateUrl: './categoria-form.html',
 })
 export class CategoriaForm implements OnInit {
+  private readonly alertas = inject(AlertasService);
   private readonly categoriaService = inject(CategoriaService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -56,6 +58,7 @@ export class CategoriaForm implements OnInit {
 
   protected async guardar(event: Event): Promise<void> {
     event.preventDefault();
+    if (this.guardando()) return;
     this.error.set('');
 
     await submit(this.form, {
@@ -75,8 +78,14 @@ export class CategoriaForm implements OnInit {
             await firstValueFrom(this.categoriaService.registrar(payload));
           }
           await this.router.navigate(['/categorias']);
+          // Confirma el resultado después de actualizar el listado.
+          this.alertas.exito(
+            id !== null ? 'Categoría actualizada' : 'Categoría registrada',
+            payload.nombre,
+          );
         } catch (error) {
           this.error.set(mensajeError(error));
+          this.alertas.fallo('No se pudo guardar', mensajeError(error));
         } finally {
           this.guardando.set(false);
         }

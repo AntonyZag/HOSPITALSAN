@@ -1,9 +1,10 @@
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<!-- Encabezado común con título, contexto y acciones de la pantalla. -->
+<div class="page-heading">
   <div>
     <h2 class="h3 mb-1">Productos</h2>
     <p class="text-body-secondary mb-0">Gestión de productos y control de vencimientos.</p>
   </div>
-  <div class="d-flex gap-2">
+  <div class="page-actions">
     <a class="btn btn-outline-warning" routerLink="/productos/proximos-vencer">
       <i class="bi bi-calendar-event me-1"></i>Próximos a vencer
     </a>
@@ -180,6 +181,8 @@
                   [class.btn-outline-danger]="producto.activo"
                   [class.btn-outline-success]="!producto.activo"
                   [title]="producto.activo ? 'Desactivar' : 'Activar'"
+                  [disabled]="cambiandoEstado() || cargando()"
+                  [attr.aria-label]="producto.activo ? 'Desactivar' : 'Activar'"
                   (click)="solicitarCambioEstado(producto)"
                 >
                   <i
@@ -202,15 +205,3 @@
     </table>
   </div>
 </div>
-
-<app-confirm-dialog
-  [visible]="confirmando()"
-  [titulo]="productoSeleccionado()?.activo ? 'Desactivar producto' : 'Activar producto'"
-  [mensaje]="
-    productoSeleccionado()?.activo
-      ? 'El producto se desactivará lógicamente. No se eliminará y no podrá recibir nuevas entradas.'
-      : 'El producto volverá a estar activo y disponible para nuevas entradas.'
-  "
-  (confirmar)="confirmarCambioEstado()"
-  (cancelar)="cancelarCambioEstado()"
-/>
