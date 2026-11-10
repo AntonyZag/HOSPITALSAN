@@ -25,11 +25,12 @@ _DOMAIN_ERRORS = {
 _CONNECTION_SQLSTATES = {"08001", "08S01", "28000", "HYT00"}
 
 
-def get_connection() -> pyodbc.Connection:
+def get_connection(*, database: str | None = None) -> pyodbc.Connection:
+    # La preparación y las pruebas pueden abrir master o una base aislada sin cambiar el .env.
     connection_settings = {
         "DRIVER": settings.get("DB_DRIVER"),
         "SERVER": settings.get("DB_SERVER"),
-        "DATABASE": settings.get("DB_NAME"),
+        "DATABASE": database or settings.get("DB_NAME"),
         "UID": settings.get("DB_USER"),
         "PWD": settings.get("DB_PASSWORD"),
     }
